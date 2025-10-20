@@ -6,12 +6,36 @@ using Microsoft.EntityFrameworkCore;
 
 Console.WriteLine("Ollama Llama3.2 Interactive Chat with User Database");
 Console.WriteLine("===================================================");
+Console.WriteLine();
+Console.WriteLine("Choose your mode:");
+Console.WriteLine("  1. Original Mode (JSON-based CRUD operations)");
+Console.WriteLine("  2. LangChain Mode (Natural language SQL queries)");
+Console.WriteLine();
+Console.Write("Enter mode (1 or 2): ");
+var modeChoice = Console.ReadLine();
+var useLangChain = modeChoice == "2";
+
+Console.WriteLine();
+if (useLangChain)
+{
+    Console.WriteLine("[LangChain Mode - SQL Agent Active]");
+    Console.WriteLine("Ask questions about users in natural language, like:");
+    Console.WriteLine("  - 'Show me all users with gmail addresses'");
+    Console.WriteLine("  - 'How many users are in the database?'");
+    Console.WriteLine("  - 'Find users created after 2024'");
+    Console.WriteLine("  - 'List users whose name contains John'");
+}
+else
+{
+    Console.WriteLine("[Original Mode - JSON Commands Active]");
+    Console.WriteLine("You can ask me to manage users, like:");
+    Console.WriteLine("  - 'add user named John with email john@example.com'");
+    Console.WriteLine("  - 'list all users'");
+    Console.WriteLine("  - 'find user with id 1'");
+    Console.WriteLine("  - 'delete user with id 2'");
+}
+Console.WriteLine();
 Console.WriteLine("Type 'exit' or 'quit' to end the session");
-Console.WriteLine("You can ask me to manage users, like:");
-Console.WriteLine("  - 'add user named John with email john@example.com'");
-Console.WriteLine("  - 'list all users'");
-Console.WriteLine("  - 'find user with id 1'");
-Console.WriteLine("  - 'delete user with id 2'");
 Console.WriteLine();
 
 // Initialize database
@@ -21,7 +45,24 @@ using (var db = new ApplicationDbContext())
     Console.WriteLine("[Database initialized]\n");
 }
 
-// Create HTTP client
+// Initialize LangChain handler if in LangChain mode
+LangChainUserCrudHandler? langChainHandler = null;
+if (useLangChain)
+{
+    try
+    {
+        langChainHandler = new LangChainUserCrudHandler("http://localhost:11434", "llama3.2");
+        Console.WriteLine("[LangChain SQL Agent initialized]\n");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Warning] Could not initialize LangChain: {ex.Message}");
+        Console.WriteLine("Falling back to original mode...\n");
+        useLangChain = false;
+    }
+}
+
+// Create HTTP client (for original mode)
 using var httpClient = new HttpClient
 {
     BaseAddress = new Uri("http://localhost:11434"),
@@ -72,9 +113,44 @@ while (true)
         prompt.Equals("quit", StringComparison.OrdinalIgnoreCase))
     {
         Console.WriteLine("\nGoodbye!");
+        langChainHandler?.Dispose();
         break;
     }
 
+    // Handle LangChain mode
+    if (useLangChain && langChainHandler != null)
+    {
+        try
+        {
+            // Start loader
+            loaderCts = new CancellationTokenSource();
+            var loaderTask = Task.Run(() => ShowLoader(loaderCts.Token));
+
+            // Process query using LangChain
+            var response = await langChainHandler.ProcessQueryAsync(prompt);
+
+            // Stop loader
+            loaderCts.Cancel();
+            await loaderTask;
+            ClearLoader();
+
+            // Display response
+            Console.WriteLine($"Llama3.2: {response}\n");
+        }
+        catch (Exception ex)
+        {
+            if (loaderCts != null)
+            {
+                loaderCts.Cancel();
+                ClearLoader();
+            }
+            Console.WriteLine($"Error: {ex.Message}\n");
+        }
+
+        continue; // Skip the original mode processing
+    }
+
+    // Original mode processing
     // Add user message to conversation history
     messages.Add(new
     {
