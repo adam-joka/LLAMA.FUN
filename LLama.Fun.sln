@@ -5,6 +5,8 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLama.Fun", "LLama.Fun\LLama.Fun.csproj", "{DDD03B31-5527-46FD-B706-8DB94ADFB139}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LLama.Fun.Tests", "LLama.Fun.Tests\LLama.Fun.Tests.csproj", "{F03B2A84-75C2-49E6-8405-44AC13EE72B2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,18 @@ Global
 		{DDD03B31-5527-46FD-B706-8DB94ADFB139}.Release|x64.Build.0 = Release|Any CPU
 		{DDD03B31-5527-46FD-B706-8DB94ADFB139}.Release|x86.ActiveCfg = Release|Any CPU
 		{DDD03B31-5527-46FD-B706-8DB94ADFB139}.Release|x86.Build.0 = Release|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Debug|x64.Build.0 = Debug|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Debug|x86.Build.0 = Debug|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Release|x64.ActiveCfg = Release|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Release|x64.Build.0 = Release|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Release|x86.ActiveCfg = Release|Any CPU
+		{F03B2A84-75C2-49E6-8405-44AC13EE72B2}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

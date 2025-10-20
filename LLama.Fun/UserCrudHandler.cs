@@ -7,7 +7,13 @@ public static class UserCrudHandler
 {
     public static async Task<string> HandleUserOperation(string operation, JsonElement parameters)
     {
-        using var db = new ApplicationDbContext();
+        return await HandleUserOperation(operation, parameters, null);
+    }
+
+    public static async Task<string> HandleUserOperation(string operation, JsonElement parameters, ApplicationDbContext? dbContext)
+    {
+        var shouldDispose = dbContext == null;
+        var db = dbContext ?? new ApplicationDbContext();
 
         try
         {
@@ -39,6 +45,13 @@ public static class UserCrudHandler
         {
             return $"Error: {ex.Message}";
         }
+        finally
+        {
+            if (shouldDispose)
+            {
+                db.Dispose();
+            }
+        }
     }
 
     private static async Task<string> AddUser(ApplicationDbContext db, JsonElement parameters)
@@ -49,6 +62,13 @@ public static class UserCrudHandler
         if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(email))
         {
             return "Error: Name and email are required";
+        }
+
+        // Check if email already exists
+        var existingUser = await db.Users.FirstOrDefaultAsync(u => u.Email == email);
+        if (existingUser != null)
+        {
+            return $"Error: A user with email '{email}' already exists (ID: {existingUser.Id}, Name: {existingUser.Name})";
         }
 
         var user = new User
