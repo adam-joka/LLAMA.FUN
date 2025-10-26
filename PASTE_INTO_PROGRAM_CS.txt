@@ -1,0 +1,111 @@
+// ============================================================================
+// OLLAMA + MCP INTEGRATION - Paste this into your Program.cs
+// ============================================================================
+//
+// This gives you an AI assistant that can manage your database using natural language!
+//
+// Prerequisites:
+// 1. Make sure Ollama is running: ollama serve
+// 2. Make sure llama3.2 is installed: ollama pull llama3.2
+//
+// Then just run: dotnet run
+// ============================================================================
+
+using LLama.Fun;
+using LLama.Fun.Mcp;
+
+// Initialize database
+using var context = new ApplicationDbContext();
+await context.Database.EnsureCreatedAsync();
+
+// Create Ollama MCP integration
+var ollama = new OllamaMcpIntegration();
+
+Console.WriteLine("╔════════════════════════════════════════════════════════════╗");
+Console.WriteLine("║        AI Database Assistant (Ollama + MCP)                ║");
+Console.WriteLine("╚════════════════════════════════════════════════════════════╝");
+Console.WriteLine();
+Console.WriteLine("I can help you manage users in the database using natural language!");
+Console.WriteLine();
+Console.WriteLine("Try commands like:");
+Console.WriteLine("  • 'Add a user named John with email john@example.com'");
+Console.WriteLine("  • 'List all users'");
+Console.WriteLine("  • 'Find user with ID 1'");
+Console.WriteLine("  • 'Update user 1 email to new@email.com'");
+Console.WriteLine("  • 'Delete user with ID 2'");
+Console.WriteLine();
+Console.WriteLine("Type 'exit' to quit, 'clear' to clear conversation history");
+Console.WriteLine("─────────────────────────────────────────────────────────────");
+Console.WriteLine();
+
+while (true)
+{
+    Console.Write("You: ");
+    var input = Console.ReadLine();
+
+    if (string.IsNullOrWhiteSpace(input))
+        continue;
+
+    if (input.ToLower() == "exit")
+    {
+        Console.WriteLine("\nGoodbye! 👋");
+        break;
+    }
+
+    if (input.ToLower() == "clear")
+    {
+        ollama.ClearHistory();
+        Console.WriteLine("✓ History cleared.\n");
+        continue;
+    }
+
+    try
+    {
+        Console.Write("AI: ");
+
+        // Show loading spinner while processing
+        var cts = new CancellationTokenSource();
+        var spinner = Task.Run(async () =>
+        {
+            var chars = new[] { '⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏' };
+            int i = 0;
+            try
+            {
+                while (!cts.Token.IsCancellationRequested)
+                {
+                    Console.Write(chars[i++ % chars.Length]);
+                    await Task.Delay(80, cts.Token);
+                    Console.Write("\b");
+                }
+            }
+            catch (TaskCanceledException) { }
+            Console.Write(" \b");
+        });
+
+        // Process the query
+        var response = await ollama.ProcessQueryAsync(input);
+
+        // Stop spinner
+        cts.Cancel();
+        await spinner;
+
+        // Show response
+        Console.WriteLine(response);
+        Console.WriteLine();
+    }
+    catch (HttpRequestException)
+    {
+        Console.WriteLine("❌ Cannot connect to Ollama.");
+        Console.WriteLine("   Make sure Ollama is running: ollama serve");
+        Console.WriteLine();
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"❌ Error: {ex.Message}");
+        Console.WriteLine();
+    }
+}
+
+// ============================================================================
+// That's it! You now have an AI assistant that can manage your database.
+// ============================================================================
