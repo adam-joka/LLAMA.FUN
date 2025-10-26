@@ -12,74 +12,51 @@ ollama serve
 ollama pull llama3.2
 ```
 
-## Step 2: Add to Your Program.cs
+## Step 2: Run the Application
 
-Replace or add to your existing `Program.cs`:
-
-```csharp
-using LLama.Fun;
-using LLama.Fun.Mcp;
-using LLama.Fun.Mcp.Examples;
-
-// Initialize database
-using var context = new ApplicationDbContext();
-await context.Database.EnsureCreatedAsync();
-
-Console.WriteLine("Choose a mode:");
-Console.WriteLine("1. Run automated Ollama MCP examples");
-Console.WriteLine("2. Interactive chat with AI");
-Console.Write("\nChoice: ");
-
-var choice = Console.ReadLine();
-
-if (choice == "1")
-{
-    // Automated examples - shows what the AI can do
-    await OllamaMcpExample.RunAutomatedExamplesAsync();
-}
-else
-{
-    // Interactive chat mode
-    var ollama = new OllamaMcpIntegration();
-
-    Console.WriteLine("\n=== AI Database Assistant ===");
-    Console.WriteLine("I can help you manage users in the database!");
-    Console.WriteLine("Type 'exit' to quit, 'clear' to clear history\n");
-
-    while (true)
-    {
-        Console.Write("You: ");
-        var input = Console.ReadLine();
-
-        if (string.IsNullOrWhiteSpace(input)) continue;
-        if (input.ToLower() == "exit") break;
-
-        if (input.ToLower() == "clear")
-        {
-            ollama.ClearHistory();
-            Console.WriteLine("History cleared.\n");
-            continue;
-        }
-
-        try
-        {
-            var response = await ollama.ProcessQueryAsync(input);
-            Console.WriteLine($"AI: {response}\n");
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Error: {ex.Message}");
-            Console.WriteLine("Is Ollama running? Try: ollama serve\n");
-        }
-    }
-}
-```
-
-## Step 3: Run It!
+The MCP integration is already built into Program.cs. Just run:
 
 ```bash
+cd LLama.Fun
 dotnet run
 ```
+
+## Step 3: Select MCP Mode
+
+When prompted, enter **3** to use MCP Mode:
+
+```
+Ollama Llama3.2 Interactive Chat with User Database
+===================================================
+
+Choose your mode:
+  1. Original Mode (JSON-based CRUD operations)
+  2. LangChain Mode (Natural language SQL queries)
+  3. MCP Mode (Model Context Protocol integration)
+
+Enter mode (1, 2, or 3): 3
+```
+
+You'll see:
+```
+[MCP Mode - Model Context Protocol Active]
+Natural language database assistant with tool calling:
+  - 'Add a user named John with email john@example.com'
+  - 'List all users'
+  - 'Find user with ID 1'
+  - 'Update user 1 email to new@email.com'
+  - 'Delete user with ID 2'
+
+Type 'exit' or 'quit' to end the session, 'clear' to clear conversation history
+
+[Database initialized]
+
+[MCP integration initialized]
+
+You:
+```
+
+That's it! Start chatting with your database.
 
 ## What You Can Do
 
@@ -109,24 +86,37 @@ dotnet run
 
 ```
 You: Add a user named Alice with email alice@example.com
-AI: User 'Alice' added successfully with ID 1
+⠋ Thinking...
+Llama3.2: I've successfully added a new user named Alice with the email alice@example.com. The user has been assigned ID 1.
 
 You: Add Bob Smith, email bob@example.com
-AI: User 'Bob Smith' added successfully with ID 2
+⠋ Thinking...
+Llama3.2: User 'Bob Smith' has been successfully added to the database with ID 2.
 
 You: List all users
-AI: Found 2 user(s):
-- ID=1, Name=Alice, Email=alice@example.com, Created=2025-01-15
-- ID=2, Name=Bob Smith, Email=bob@example.com, Created=2025-01-15
+⠋ Thinking...
+Llama3.2: Here are all the users in the database:
+- ID: 1, Name: Alice, Email: alice@example.com, Created: 2025-01-15
+- ID: 2, Name: Bob Smith, Email: bob@example.com, Created: 2025-01-15
 
 You: Update Alice's email to alice.new@example.com
-AI: User 1 updated successfully
+⠋ Thinking...
+Llama3.2: I've successfully updated Alice's email address to alice.new@example.com.
 
 You: Delete Bob
-AI: User 'Bob Smith' (ID=2) deleted successfully
+⠋ Thinking...
+Llama3.2: User 'Bob Smith' (ID 2) has been successfully deleted from the database.
 
 You: How many users are left?
-AI: There is 1 user in the database.
+⠋ Thinking...
+Llama3.2: There is currently 1 user in the database.
+
+You: clear
+[History cleared]
+
+You: exit
+
+Goodbye!
 ```
 
 ## Troubleshooting
@@ -151,14 +141,24 @@ ollama pull llama3.2
 - Keep Ollama running between sessions
 - Try a smaller model: `ollama pull llama3.1`
 
+## Features of Integrated MCP Mode
+
+✅ **No Code Changes Required** - Just select mode 3 when running
+✅ **Conversation History** - AI remembers context from previous messages
+✅ **Clear Command** - Type 'clear' to reset conversation history
+✅ **Animated Loader** - Visual feedback with spinner while processing
+✅ **Error Handling** - Graceful error messages if Ollama is unavailable
+✅ **Tool Calling** - AI automatically selects the right database operations
+✅ **Natural Responses** - Friendly, conversational output
+
 ## What's Happening Behind the Scenes?
 
-1. **Your query** goes to Ollama (llama3.2)
-2. **Ollama decides** which database tool to use
-3. **MCP executes** the tool (add_user, list_users, etc.)
-4. **Result goes back** to Ollama
-5. **Ollama generates** a natural language response
-6. **You get** a friendly answer!
+1. **Your query** goes to Ollama (llama3.2) with available MCP tools
+2. **Ollama decides** which database tool to use based on your request
+3. **MCP executes** the tool (list_users, create_user, update_user, etc.)
+4. **Result goes back** to Ollama with the operation outcome
+5. **Ollama generates** a natural language response explaining the result
+6. **You get** a friendly answer, and the conversation continues!
 
 ## Next Steps
 

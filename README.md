@@ -4,9 +4,11 @@ An interactive console application that uses Llama 3.2 (via Ollama) to manage a 
 
 ## Features
 
+- **Three Operating Modes** - Choose between Original, LangChain, or MCP mode
 - **Natural Language Interface** - Talk to your database using plain English
 - **Full CRUD Operations** - Create, Read, Update, and Delete users
-- **Conversation Context** - Maintains chat history for contextual responses
+- **Conversation Context** - Maintains chat history for contextual responses (LangChain & MCP modes)
+- **Tool Calling** - AI automatically selects the right database operations (MCP mode)
 - **SQLite Database** - Lightweight local database using Entity Framework Core
 - **Animated Loader** - Visual feedback while Llama processes requests
 
@@ -42,6 +44,28 @@ Run the application:
 ```bash
 dotnet run
 ```
+
+When you start the application, you'll be prompted to choose a mode:
+
+```
+Choose your mode:
+  1. Original Mode (JSON-based CRUD operations)
+  2. LangChain Mode (Natural language SQL queries)
+  3. MCP Mode (Model Context Protocol integration)
+
+Enter mode (1, 2, or 3):
+```
+
+### Mode Comparison
+
+| Feature | Mode 1: Original | Mode 2: LangChain | Mode 3: MCP |
+|---------|------------------|-------------------|-------------|
+| Natural Language | Limited | ✅ Yes | ✅ Yes |
+| SQL Queries | ❌ No | ✅ Yes | ❌ No |
+| Tool Calling | ❌ No | ❌ No | ✅ Yes |
+| Conversation History | ❌ No | ❌ No | ✅ Yes |
+| Complexity | Simple | Advanced | Medium |
+| Best For | Learning | SQL queries | Conversational AI |
 
 ### Example Commands
 
@@ -82,20 +106,43 @@ You: how many users are in the database?
 
 ## How It Works
 
+### Mode 1: Original (JSON-based)
 1. **Natural Language Processing** - Your request is sent to Llama 3.2
 2. **Command Interpretation** - Llama interprets the request and generates a JSON database command
 3. **Database Operation** - The app executes the command using Entity Framework Core
 4. **Natural Response** - Llama translates the database result back into conversational language
 
+### Mode 2: LangChain (SQL Agent)
+1. **Query Analysis** - LangChain agent analyzes your natural language question
+2. **SQL Generation** - Agent generates appropriate SQL queries
+3. **Database Execution** - SQL is executed against the SQLite database
+4. **Result Formatting** - Results are formatted and explained in natural language
+
+### Mode 3: MCP (Tool Calling)
+1. **User Query** - Your request is sent to Llama 3.2 with available tools
+2. **Tool Selection** - Llama decides which MCP tool to call (list_users, create_user, etc.)
+3. **Tool Execution** - The selected tool executes the database operation
+4. **Conversation** - Llama explains the result conversationally, maintaining context
+
 ## Project Structure
 
 ```
 LLama.Fun/
-├── Program.cs              # Main application with chat loop
-├── User.cs                 # User entity model
-├── ApplicationDbContext.cs # EF Core database context
-├── UserCrudHandler.cs      # CRUD operation handlers
-└── llama.db               # SQLite database (created on first run)
+├── Program.cs                    # Main application with mode selection
+├── User.cs                       # User entity model
+├── ApplicationDbContext.cs       # EF Core database context
+├── UserCrudHandler.cs            # CRUD operation handlers
+├── LangChainUserCrudHandler.cs   # LangChain SQL agent (Mode 2)
+├── Mcp/
+│   ├── OllamaMcpIntegration.cs   # Ollama + MCP integration (Mode 3)
+│   ├── McpServer.cs              # MCP server implementation
+│   ├── McpUserToolsAdapter.cs    # User CRUD → MCP tools adapter
+│   ├── McpModels.cs              # MCP protocol models
+│   ├── McpStdioServer.cs         # Claude Desktop integration
+│   └── Examples/
+│       ├── OllamaMcpExample.cs   # MCP examples
+│       └── McpClientExample.cs   # MCP client examples
+└── llama.db                      # SQLite database (created on first run)
 ```
 
 ## Database Schema
@@ -121,6 +168,7 @@ using var httpClient = new HttpClient
 ## Commands
 
 - Type `exit` or `quit` to end the session
+- Type `clear` to clear conversation history (MCP mode only)
 - Press Ctrl+C to force quit
 
 ## Technologies Used
@@ -131,6 +179,8 @@ using var httpClient = new HttpClient
 - **Ollama API** - Local LLM inference
 - **Llama 3.2** - Large language model
 - **System.Text.Json** - JSON serialization
+- **Model Context Protocol (MCP)** - Standardized tool calling protocol
+- **LangChain** - SQL agent framework (Mode 2)
 
 ## Troubleshooting
 
@@ -146,6 +196,19 @@ using var httpClient = new HttpClient
 - The SQLite database will be created automatically on first run
 - Delete `llama.db` to reset the database
 
+## Additional Documentation
+
+For more detailed information about specific modes:
+
+- **MCP Mode Documentation**
+  - `README_MCP.md` - Complete MCP integration overview
+  - `QUICKSTART_OLLAMA_MCP.md` - Quick start guide for MCP mode
+  - `MCP_INTEGRATION_GUIDE.md` - Technical MCP implementation details
+  - `OLLAMA_MCP_INTEGRATION.md` - Ollama + MCP integration guide
+
+- **LangChain Documentation**
+  - `LANGCHAIN_IMPLEMENTATION.md` - LangChain SQL agent implementation
+
 ## Future Enhancements
 
 - Support for more complex queries (filtering, sorting)
@@ -154,6 +217,7 @@ using var httpClient = new HttpClient
 - Multi-user authentication
 - Web API interface
 - Streaming responses for real-time feedback
+- Additional MCP tools and resources
 
 ## License
 

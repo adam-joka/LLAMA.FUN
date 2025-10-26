@@ -18,37 +18,45 @@ Your LLama.Fun project now has full **Model Context Protocol (MCP)** integration
 ollama serve
 ```
 
-### 2. Add to Your Program.cs
-```csharp
-using LLama.Fun.Mcp;
-
-var ollama = new OllamaMcpIntegration();
-
-Console.WriteLine("Chat with your database! Type 'exit' to quit.\n");
-
-while (true)
-{
-    Console.Write("You: ");
-    var input = Console.ReadLine();
-    if (input?.ToLower() == "exit") break;
-
-    var response = await ollama.ProcessQueryAsync(input);
-    Console.WriteLine($"AI: {response}\n");
-}
-```
-
-### 3. Run and Chat!
+### 2. Run the Application
 ```bash
+cd LLama.Fun
 dotnet run
 ```
 
+### 3. Select MCP Mode
+When prompted, choose mode 3:
+
 ```
+Choose your mode:
+  1. Original Mode (JSON-based CRUD operations)
+  2. LangChain Mode (Natural language SQL queries)
+  3. MCP Mode (Model Context Protocol integration)
+
+Enter mode (1, 2, or 3): 3
+```
+
+### 4. Chat with Your Database!
+
+```
+[MCP Mode - Model Context Protocol Active]
+Natural language database assistant with tool calling:
+  - 'Add a user named John with email john@example.com'
+  - 'List all users'
+  - 'Find user with ID 1'
+  - 'Update user 1 email to new@email.com'
+  - 'Delete user with ID 2'
+
+Type 'exit' or 'quit' to end the session, 'clear' to clear conversation history
+
 You: Add a user named Alice with email alice@example.com
-AI: User 'Alice' added successfully with ID 1
+⠋ Thinking...
+Llama3.2: I've successfully added a new user named Alice with the email alice@example.com. The user has been assigned ID 1.
 
 You: List all users
-AI: Found 1 user(s):
-- ID=1, Name=Alice, Email=alice@example.com, Created=2025-01-15
+⠋ Thinking...
+Llama3.2: Here are all the users in the database:
+- ID: 1, Name: Alice, Email: alice@example.com, Created: 2025-01-15
 ```
 
 ## What Can You Do?
@@ -86,26 +94,41 @@ AI: Found 1 user(s):
    └── README_MCP.md                  # This file
 ```
 
-## Three Ways to Use It
+## How to Use MCP Mode
 
-### Option 1: Interactive Chat (Recommended)
-Talk to your database in natural language!
+### Primary Method: Built-in Mode Selection (Recommended)
+The easiest way is to use the built-in mode selection:
 
-```csharp
+1. Run `dotnet run` in the LLama.Fun directory
+2. Choose option 3 when prompted
+3. Start chatting with your database!
+
+Features:
+- ✅ Integrated into main Program.cs
+- ✅ No code changes needed
+- ✅ Conversation history with 'clear' command
+- ✅ Animated loading spinner
+- ✅ Clean error handling
+
+### Alternative: Run Standalone Examples
+You can also run the example programs directly:
+
+**Interactive Chat Example:**
+```bash
+# Edit Program.cs temporarily to run:
 using LLama.Fun.Mcp.Examples;
 await OllamaMcpExample.RunInteractiveChatAsync();
 ```
 
-### Option 2: Automated Examples
-See what's possible with automated demos:
-
-```csharp
+**Automated Examples:**
+```bash
+# Edit Program.cs temporarily to run:
 using LLama.Fun.Mcp.Examples;
 await OllamaMcpExample.RunAutomatedExamplesAsync();
 ```
 
-### Option 3: Claude Desktop Integration
-Use with Claude Desktop app:
+### Claude Desktop Integration
+Use your database with Claude Desktop app:
 
 Add to `claude_desktop_config.json`:
 ```json
@@ -200,44 +223,78 @@ ollama pull llama3.2  # Download model
 
 ## Comparison: Your Three Modes
 
-| Feature | Original | LangChain | Ollama MCP |
-|---------|----------|-----------|------------|
-| Natural Language | ❌ | ✅ | ✅ |
-| SQL Queries | ❌ | ✅ | ❌ |
-| Tool Calling | ❌ | ❌ | ✅ |
-| Conversation | ❌ | ❌ | ✅ |
+| Feature | Mode 1: Original | Mode 2: LangChain | Mode 3: MCP |
+|---------|------------------|-------------------|-------------|
+| Natural Language | Limited (JSON) | ✅ Yes | ✅ Yes |
+| SQL Queries | ❌ No | ✅ Yes | ❌ No |
+| Tool Calling | ❌ No | ❌ No | ✅ Yes |
+| Conversation History | ❌ No | ❌ No | ✅ Yes |
 | Speed | ⚡ Fast | ⚠️ Medium | ⚠️ Medium |
 | Complexity | Simple | Advanced | Medium |
-| 100% Local | ❌ | ⚠️ Partial | ✅ Yes! |
+| 100% Local | ✅ Yes | ✅ Yes | ✅ Yes |
+| Best For | Learning | SQL queries | Conversational AI |
 
 ## Example Session
 
 ```
-=== AI Database Assistant ===
+Ollama Llama3.2 Interactive Chat with User Database
+===================================================
+
+Choose your mode:
+  1. Original Mode (JSON-based CRUD operations)
+  2. LangChain Mode (Natural language SQL queries)
+  3. MCP Mode (Model Context Protocol integration)
+
+Enter mode (1, 2, or 3): 3
+
+[MCP Mode - Model Context Protocol Active]
+Natural language database assistant with tool calling:
+  - 'Add a user named John with email john@example.com'
+  - 'List all users'
+  - 'Find user with ID 1'
+  - 'Update user 1 email to new@email.com'
+  - 'Delete user with ID 2'
+
+Type 'exit' or 'quit' to end the session, 'clear' to clear conversation history
+
+[Database initialized]
+
+[MCP integration initialized]
 
 You: Add a user named Alice Johnson with email alice@example.com
-AI: User 'Alice Johnson' added successfully with ID 1
+⠋ Thinking...
+Llama3.2: I've successfully added a new user named Alice Johnson with the email alice@example.com. The user has been assigned ID 1 and was created just now.
 
 You: Add Bob Smith, bob@test.com
-AI: User 'Bob Smith' added successfully with ID 2
+⠋ Thinking...
+Llama3.2: User 'Bob Smith' has been successfully added to the database with ID 2 and email bob@test.com.
 
 You: How many users do we have?
-AI: There are 2 users in the database.
+⠋ Thinking...
+Llama3.2: We currently have 2 users in the database.
 
 You: Update Alice's email to alice.j@newcompany.com
-AI: User 1 updated successfully
+⠋ Thinking...
+Llama3.2: I've successfully updated Alice Johnson's email address to alice.j@newcompany.com.
 
 You: Show everyone
-AI: Found 2 user(s):
-- ID=1, Name=Alice Johnson, Email=alice.j@newcompany.com, Created=2025-01-15
-- ID=2, Name=Bob Smith, Email=bob@test.com, Created=2025-01-15
+⠋ Thinking...
+Llama3.2: Here are all the users in the database:
+- ID: 1, Name: Alice Johnson, Email: alice.j@newcompany.com, Created: 2025-01-15
+- ID: 2, Name: Bob Smith, Email: bob@test.com, Created: 2025-01-15
 
 You: Delete Bob
-AI: User 'Bob Smith' (ID=2) deleted successfully
+⠋ Thinking...
+Llama3.2: User 'Bob Smith' (ID 2) has been successfully deleted from the database.
 
 You: List users
-AI: Found 1 user(s):
-- ID=1, Name=Alice Johnson, Email=alice.j@newcompany.com, Created=2025-01-15
+⠋ Thinking...
+Llama3.2: Here is the current user in the database:
+- ID: 1, Name: Alice Johnson, Email: alice.j@newcompany.com, Created: 2025-01-15
+
+You: exit
+
+Goodbye!
 ```
 
 ## What's Next?

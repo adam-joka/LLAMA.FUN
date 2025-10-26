@@ -2,6 +2,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using LLama.Fun;
+using LLama.Fun.Mcp;
 using Microsoft.EntityFrameworkCore;
 
 Console.WriteLine("Ollama Llama3.2 Interactive Chat with User Database");
@@ -10,13 +11,25 @@ Console.WriteLine();
 Console.WriteLine("Choose your mode:");
 Console.WriteLine("  1. Original Mode (JSON-based CRUD operations)");
 Console.WriteLine("  2. LangChain Mode (Natural language SQL queries)");
+Console.WriteLine("  3. MCP Mode (Model Context Protocol integration)");
 Console.WriteLine();
-Console.Write("Enter mode (1 or 2): ");
+Console.Write("Enter mode (1, 2, or 3): ");
 var modeChoice = Console.ReadLine();
 var useLangChain = modeChoice == "2";
+var useMcp = modeChoice == "3";
 
 Console.WriteLine();
-if (useLangChain)
+if (useMcp)
+{
+    Console.WriteLine("[MCP Mode - Model Context Protocol Active]");
+    Console.WriteLine("Natural language database assistant with tool calling:");
+    Console.WriteLine("  - 'Add a user named John with email john@example.com'");
+    Console.WriteLine("  - 'List all users'");
+    Console.WriteLine("  - 'Find user with ID 1'");
+    Console.WriteLine("  - 'Update user 1 email to new@email.com'");
+    Console.WriteLine("  - 'Delete user with ID 2'");
+}
+else if (useLangChain)
 {
     Console.WriteLine("[LangChain Mode - SQL Agent Active]");
     Console.WriteLine("Ask questions about users in natural language, like:");
@@ -35,7 +48,14 @@ else
     Console.WriteLine("  - 'delete user with id 2'");
 }
 Console.WriteLine();
-Console.WriteLine("Type 'exit' or 'quit' to end the session");
+if (useMcp)
+{
+    Console.WriteLine("Type 'exit' or 'quit' to end the session, 'clear' to clear conversation history");
+}
+else
+{
+    Console.WriteLine("Type 'exit' or 'quit' to end the session");
+}
 Console.WriteLine();
 
 // Initialize database
@@ -43,6 +63,23 @@ using (var db = new ApplicationDbContext())
 {
     await db.Database.EnsureCreatedAsync();
     Console.WriteLine("[Database initialized]\n");
+}
+
+// Initialize MCP integration if in MCP mode
+OllamaMcpIntegration? mcpIntegration = null;
+if (useMcp)
+{
+    try
+    {
+        mcpIntegration = new OllamaMcpIntegration();
+        Console.WriteLine("[MCP integration initialized]\n");
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[Warning] Could not initialize MCP: {ex.Message}");
+        Console.WriteLine("Falling back to original mode...\n");
+        useMcp = false;
+    }
 }
 
 // Initialize LangChain handler if in LangChain mode
@@ -115,6 +152,47 @@ while (true)
         Console.WriteLine("\nGoodbye!");
         langChainHandler?.Dispose();
         break;
+    }
+
+    // Handle MCP mode
+    if (useMcp && mcpIntegration != null)
+    {
+        // Check for clear command
+        if (prompt.Equals("clear", StringComparison.OrdinalIgnoreCase))
+        {
+            mcpIntegration.ClearHistory();
+            Console.WriteLine("[History cleared]\n");
+            continue;
+        }
+
+        try
+        {
+            // Start loader
+            loaderCts = new CancellationTokenSource();
+            var loaderTask = Task.Run(() => ShowLoader(loaderCts.Token));
+
+            // Process query using MCP
+            var response = await mcpIntegration.ProcessQueryAsync(prompt);
+
+            // Stop loader
+            loaderCts.Cancel();
+            await loaderTask;
+            ClearLoader();
+
+            // Display response
+            Console.WriteLine($"Llama3.2: {response}\n");
+        }
+        catch (Exception ex)
+        {
+            if (loaderCts != null)
+            {
+                loaderCts.Cancel();
+                ClearLoader();
+            }
+            Console.WriteLine($"Error: {ex.Message}\n");
+        }
+
+        continue; // Skip the original mode processing
     }
 
     // Handle LangChain mode

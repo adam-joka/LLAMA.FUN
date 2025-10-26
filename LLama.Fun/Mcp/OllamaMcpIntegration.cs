@@ -28,6 +28,24 @@ public class OllamaMcpIntegration
         _mcpServer = new McpServer();
         McpUserToolsAdapter.RegisterUserTools(_mcpServer);
         McpUserToolsAdapter.RegisterUserResources(_mcpServer);
+
+        // Add system message to instruct the model to use tools
+        _conversationHistory.Add(new Dictionary<string, object>
+        {
+            { "role", "system" },
+            { "content", @"You are an AI assistant with access to a user database through function calling tools.
+
+When users ask you to perform database operations, you should use the available tools to help them.
+
+Available operations:
+- list_users: Get all users from the database
+- get_user: Get a specific user by ID
+- create_user: Add a new user (requires name and email)
+- update_user: Update an existing user's information
+- delete_user: Delete a user by ID
+
+Always use the appropriate tool when the user requests database operations. After receiving the tool results, explain them clearly to the user." }
+        });
     }
 
     /// <summary>
@@ -63,12 +81,19 @@ public class OllamaMcpIntegration
             var message = messageElement;
 
             // Add assistant message to history
-            _conversationHistory.Add(new Dictionary<string, object>
+            var historyEntry = new Dictionary<string, object>
             {
                 { "role", "assistant" },
-                { "content", message.TryGetProperty("content", out var content) ? content.GetString() ?? "" : "" },
-                { "tool_calls", message.TryGetProperty("tool_calls", out var toolCalls) ? toolCalls : new JsonElement() }
-            });
+                { "content", message.TryGetProperty("content", out var content) ? content.GetString() ?? "" : "" }
+            };
+
+            // Only add tool_calls if they exist (convert to serializable format)
+            if (message.TryGetProperty("tool_calls", out var toolCalls) && toolCalls.ValueKind != JsonValueKind.Undefined)
+            {
+                historyEntry["tool_calls"] = JsonSerializer.Deserialize<object>(toolCalls.GetRawText()) ?? new object();
+            }
+
+            _conversationHistory.Add(historyEntry);
 
             // Execute tool calls if present
             if (message.TryGetProperty("tool_calls", out var calls) && calls.ValueKind == JsonValueKind.Array)
@@ -259,11 +284,19 @@ public class OllamaMcpIntegration
     }
 
     /// <summary>
-    /// Clear conversation history
+    /// Clear conversation history (keeps system message)
     /// </summary>
     public void ClearHistory()
     {
+        var systemMessage = _conversationHistory.FirstOrDefault(m =>
+            m.ContainsKey("role") && m["role"].ToString() == "system");
+
         _conversationHistory.Clear();
+
+        if (systemMessage != null)
+        {
+            _conversationHistory.Add(systemMessage);
+        }
     }
 
     /// <summary>
